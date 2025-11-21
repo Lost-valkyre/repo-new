@@ -3,37 +3,122 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quiz — Ghibli × Lofi (Neon Blue)</title>
+  <title>Kuis Sejarah Jawa Timur — GhibliQuiz Clone</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
+  <div class="wrap">
     <header class="topbar">
-      <div class="brand">
-        <div class="logo-dot"></div>
-        <h1>GhibliQuiz</h1>
-        <small>— Lofi Edition</small>
+      <div class="title-block">
+        <div class="icon-square"></div>
+        <div>
+          <h1>Kuis Sejarah Jawa Timur</h1>
+          <div class="sub">FESTIKA JATIM 2025 — Digitalisasi Pembelajaran Bermakna</div>
+        </div>
       </div>
 
-      <div class="controls">
-        <label class="toggle">
-          <input id="musicToggle" type="checkbox" checked>
-          <span>Music</span>
-        </label>
-        <button id="resetBtn" title="Reset leaderboard">Reset Skor</button>
-        <button id="exportBtn" title="Export leaderboard">Export</button>
+      <div class="top-right">
+        <div class="timer-badge"><span id="timerBadge">45s</span></div>
+        <div class="qcount"><span id="qIdx">1</span>/ <span id="qTot">10</span></div>
       </div>
     </header>
 
     <main class="main">
-      <section class="quiz-panel">
-        <div class="quiz-header">
-          <h2 id="quizTitle">Kuis Sejarah Jawa Timur</h2>
-          <div class="meta">
-            <div class="timer">Timer: <span id="timer">20</span>s</div>
-            <div class="progress">Soal <span id="qIndex">1</span>/<span id="qTotal">10</span></div>
+      <!-- LEFT QUIZ PANEL -->
+      <section class="left">
+        <div class="card quizcard">
+          <div class="question-title" id="questionTitle">Memuat soal...</div>
+
+          <div id="answers" class="answers-grid">
+            <!-- answer buttons injected here -->
+          </div>
+
+          <div class="progress-row">
+            <div class="progress-bar-wrap">
+              <div class="progress-track"><div id="progFill" class="prog-fill"></div></div>
+            </div>
+            <div class="explain" id="explain">Penjelasan akan muncul di sini.</div>
+          </div>
+
+          <div class="nav-row">
+            <button id="nextBtn" class="btn primary">Soal Berikutnya</button>
+            <button id="resetQBtn" class="btn ghost">Reset</button>
           </div>
         </div>
+      </section>
+
+      <!-- RIGHT SETTINGS / LEADERBOARD -->
+      <aside class="right">
+        <div class="card sidecard">
+          <h3>Leaderboard</h3>
+          <ol id="leaderList" class="leader-list"><li><em>Belum ada skor tersimpan.</em></li></ol>
+          <div class="lb-actions">
+            <button id="resetLb" class="btn small">Reset Leaderboard</button>
+            <button id="exportLb" class="btn small">Export</button>
+          </div>
+        </div>
+
+        <div class="card sidecard">
+          <h3>Pengaturan</h3>
+
+          <label class="opt-row">Mode Gelap
+            <input id="darkMode" type="checkbox" checked>
+          </label>
+
+          <label class="opt-row">Musik Latar
+            <input id="musicToggle" type="checkbox" checked>
+          </label>
+
+          <label class="opt-row">Suara Efek
+            <input id="sfxToggle" type="checkbox" checked>
+          </label>
+
+          <label>Timer per soal
+            <select id="timerSelect">
+              <option value="10">10s</option>
+              <option value="15">15s</option>
+              <option value="20">20s</option>
+              <option value="30">30s</option>
+              <option value="45" selected>45s</option>
+            </select>
+          </label>
+
+          <label>Jumlah Soal / Sesi
+            <select id="countSelect">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+
+          <div class="music-url">
+            <label>Ganti Musik (mp3 URL)</label>
+            <input id="musicUrl" placeholder="opsional: paste mp3 url" />
+            <small class="muted">Kosong = default lofi</small>
+          </div>
+
+          <div class="logbook">
+            <small>Logbook AI: Catat setiap interaksi (opsional)</small>
+          </div>
+        </div>
+
+        <div class="card sidecard">
+          <h3>Info</h3>
+          <p class="muted">Ghibli-inspired UI • Lofi soundtrack • Local storage leaderboard</p>
+          <p><a href="/mnt/data/ND_Kadis ke Kacab_Festika Jatim 2025_sign.pdf" target="_blank">Dokumen lomba (lokal)</a></p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- audio for background + optional sfx handled in JS -->
+  <audio id="bgMusic" loop crossorigin="anonymous">
+    <source src="https://cdn.jsdelivr.net/gh/anars/blank@master/blank.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
 
         <div class="question-box">
           <p id="questionText">Memuat soal...</p>
