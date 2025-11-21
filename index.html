@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz — Ghibli × Lofi (Neon Blue)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-dot"></div>
+        <h1>GhibliQuiz</h1>
+        <small>— Lofi Edition</small>
+      </div>
+
+      <div class="controls">
+        <label class="toggle">
+          <input id="musicToggle" type="checkbox" checked>
+          <span>Music</span>
+        </label>
+        <button id="resetBtn" title="Reset leaderboard">Reset Skor</button>
+        <button id="exportBtn" title="Export leaderboard">Export</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="quiz-panel">
+        <div class="quiz-header">
+          <h2 id="quizTitle">Kuis Sejarah Jawa Timur</h2>
+          <div class="meta">
+            <div class="timer">Timer: <span id="timer">20</span>s</div>
+            <div class="progress">Soal <span id="qIndex">1</span>/<span id="qTotal">10</span></div>
+          </div>
+        </div>
+
+        <div class="question-box">
+          <p id="questionText">Memuat soal...</p>
+          <div class="answers" id="answers"></div>
+
+          <div class="bottom-row">
+            <progress id="qProgress" value="0" max="100"></progress>
+            <div class="explain" id="explain">Penjelasan akan muncul di sini.</div>
+          </div>
+
+          <div class="nav">
+            <button id="nextBtn" class="primary">Soal Berikutnya</button>
+            <button id="skipBtn">Lewati</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="leaderboard">
+          <h3>Leaderboard (Local)</h3>
+          <ol id="leaderList">Belum ada skor tersimpan.</ol>
+          <div class="lb-actions">
+            <button id="saveScoreBtn">Simpan Skor</button>
+            <button id="clearHistoryBtn">Clear History</button>
+          </div>
+        </div>
+
+        <div class="settings">
+          <h3>Pengaturan</h3>
+          <label>Timer per soal
+            <select id="timerSelect">
+              <option value="10">10s</option>
+              <option value="15">15s</option>
+              <option value="20" selected>20s</option>
+              <option value="30">30s</option>
+            </select>
+          </label>
+
+          <label>Jumlah soal / sesi
+            <select id="countSelect">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+
+          <label>
+            Musik Lofi
+            <small>(YouTube/URL atau default)</small>
+            <input id="musicUrl" type="text" placeholder="Opsional: ganti link musik" />
+          </label>
+        </div>
+
+        <div class="about">
+          <h3>Info</h3>
+          <p>Ghibli-inspired look, lofi soundtrack, neon blue UI. Semua data disimpan lokal.</p>
+          <a href="/mnt/data/ND_Kadis ke Kacab_Festika Jatim 2025_sign.pdf" target="_blank">Dokumen lomba (lokal)</a>
+        </div>
+      </aside>
+    </main>
+
+    <audio id="bgMusic" loop crossorigin="anonymous">
+      <!-- default lofi stream (YouTube cannot be directly embedded as audio). Using an openly-hosted MP3 link is recommended.
+           You can paste your own MP3 URL into the Music URL input. -->
+      <source src="https://cdn.jsdelivr.net/gh/anars/blank@master/blank.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
