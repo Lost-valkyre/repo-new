@@ -1,39 +1,248 @@
-// ====== CONFIG & DATA ======
-const questions = [
-  {
-    q: "Pelabuhan penting di masa lalu untuk perdagangan Jawa Timur adalah...",
-    choices: ["Kediri","Banyuwangi","Madiun","Gresik"],
-    answer: 3,
-    explain: "Gresik merupakan pelabuhan penting sejarah Jawa Timur."
-  },
-  {
-    q: "Ibukota kerajaan Majapahit adalah...",
-    choices: ["Majapahit","Trowulan","Singhasari","Blitar"],
-    answer: 1,
-    explain: "Trowulan sering dikaitkan dengan pusat Majapahit."
-  },
-  // ... tambahkan sampai jumlah maksimal. Untuk demo kita pakai 10 soal.
-  {
-    q: "Siapakah tokoh proklamator Indonesia?",
-    choices:["Sukarno","Soeharto","Sukarno-Hatta","Ahmad Yani"],
-    answer: 2,
-    explain: "Proklamator adalah Soekarno dan Hatta."
-  },
-  {
-    q: "Gunung berapi di Jawa Timur yang terkenal adalah...",
-    choices:["Bromo","Merapi","Semeru","Ijen"],
-    answer: 2,
-    explain: "Semeru adalah puncak tertinggi di Pulau Jawa."
-  },
-  {
-    q: "Salah satu hasil bumi Jawa Timur adalah...",
-    choices:["Beras","Kopi","Garam","Kelapa"],
-    answer: 1,
-    explain: "Kopi juga dihasilkan di beberapa daerah di Jawa Timur."
-  },
-  {
-    q: "Salah satu seni tradisional Jawa Timur adalah...",
-    choices:["Wayang","Reog","Kenthongan","Tari Remo"],
+/* script.js — quiz logic, next button, timer, music, sfx, leaderboard (localStorage) */
+
+// ---------- QUESTIONS (10) ----------
+const QUESTIONS = [
+  { q: "Pelabuhan penting di masa lalu untuk perdagangan Jawa Timur adalah...", choices:["Kediri","Banyuwangi","Madiun","Gresik"], answer:3, explain:"Gresik merupakan pelabuhan penting sejarah Jawa Timur." },
+  { q: "Ibukota kerajaan Majapahit adalah...", choices:["Majapahit","Trowulan","Singhasari","Blitar"], answer:1, explain:"Trowulan sering dikaitkan dengan pusat Majapahit." },
+  { q: "Siapakah tokoh proklamator Indonesia?", choices:["Sukarno","Soeharto","Sukarno-Hatta","Ahmad Yani"], answer:2, explain:"Proklamator adalah Soekarno dan Hatta." },
+  { q: "Gunung berapi di Jawa Timur yang terkenal adalah...", choices:["Bromo","Merapi","Semeru","Ijen"], answer:2, explain:"Semeru adalah puncak tertinggi di Pulau Jawa." },
+  { q: "Salah satu hasil bumi Jawa Timur adalah...", choices:["Beras","Kopi","Garam","Kelapa"], answer:1, explain:"Kopi juga dihasilkan di beberapa daerah di Jawa Timur." },
+  { q: "Salah satu seni tradisional Jawa Timur adalah...", choices:["Wayang","Reog","Kenthongan","Tari Remo"], answer:3, explain:"Tari Remo populer di Jawa Timur." },
+  { q: "Jalur perdagangan utama pada zaman kerajaan menggunakan...", choices:["Kereta Api","Jalan Raya","Jalur Laut","Telegraph"], answer:2, explain:"Jalur laut penting untuk perdagangan antar pulau." },
+  { q: "Salah satu kota pelabuhan di Jawa Timur era kolonial adalah...", choices:["Surabaya","Malang","Kediri","Madiun"], answer:0, explain:"Surabaya adalah pelabuhan penting." },
+  { q: "Era reformasi Indonesia terjadi pada tahun...", choices:["1997","1998","1999","2000"], answer:1, explain:"Reformasi Indonesia dimulai pada 1998." },
+  { q: "Bentuk pemerintahan RI setelah reformasi tetap...", choices:["Monarki","Republik","Kekaisaran","Federasi"], answer:1, explain:"Indonesia tetap berbentuk republik." }
+];
+
+// ---------- STATE ----------
+let state = {
+  idx: 0,
+  total: 10,
+  score: 0,
+  answered: false,
+  remaining: 45,
+  timerId: null
+};
+
+// ---------- DOM ----------
+const qIdx = document.getElementById('qIdx');
+const qTot = document.getElementById('qTot');
+const timerBadge = document.getElementById('timerBadge');
+const questionTitle = document.getElementById('questionTitle');
+const answersWrap = document.getElementById('answers');
+const progFill = document.getElementById('progFill');
+const explain = document.getElementById('explain');
+const nextBtn = document.getElementById('nextBtn');
+const resetQBtn = document.getElementById('resetQBtn');
+
+const leaderList = document.getElementById('leaderList');
+const resetLb = document.getElementById('resetLb');
+const exportLb = document.getElementById('exportLb');
+const resetBtn = document.getElementById('resetBtn');
+const exportBtn = document.getElementById('exportBtn');
+
+const musicToggle = document.getElementById('musicToggle');
+const sfxToggle = document.getElementById('sfxToggle');
+const bgMusic = document.getElementById('bgMusic');
+const timerSelect = document.getElementById('timerSelect');
+const countSelect = document.getElementById('countSelect');
+const musicUrl = document.getElementById('musicUrl');
+
+// ---------- INIT ----------
+qTot.textContent = state.total = parseInt(countSelect.value || 10); // default 10
+qIdx.textContent = state.idx + 1;
+timerBadge.textContent = state.remaining = parseInt(timerSelect.value || 45);
+bgMusic.volume = 0.25;
+bgMusic.loop = true;
+bgMusic.play().catch(()=>{});
+
+// ---------- SFX (simple oscillator) ----------
+function sfx(freq=440, dur=120, vol=0.06){
+  if(!sfxToggle.checked) return;
+  try{
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = "sine"; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(actx.destination);
+    o.start();
+    setTimeout(()=>{ o.stop(); actx.close(); }, dur);
+  }catch(e){console.warn(e)}
+}
+
+// ---------- LEADERBOARD (localStorage) ----------
+function loadLeaderboard(){
+  const data = JSON.parse(localStorage.getItem('quiz_lb')||'[]');
+  if(!data.length){ leaderList.innerHTML = '<li><em>Belum ada skor tersimpan.</em></li>'; return; }
+  leaderList.innerHTML = '';
+  data.forEach((it,i)=>{
+    const li = document.createElement('li');
+    li.textContent = `${i+1}. ${it.name} — ${it.score} pts`;
+    leaderList.appendChild(li);
+  });
+}
+function saveScore(){
+  const name = prompt("Masukkan nama untuk leaderboard:");
+  if(!name) return;
+  const data = JSON.parse(localStorage.getItem('quiz_lb')||'[]');
+  data.push({name, score: state.score, date: new Date().toISOString()});
+  data.sort((a,b)=>b.score-a.score);
+  localStorage.setItem('quiz_lb', JSON.stringify(data.slice(0,20)));
+  loadLeaderboard();
+}
+function clearLeaderboard(){
+  if(!confirm("Hapus semua data leaderboard?")) return;
+  localStorage.removeItem('quiz_lb');
+  loadLeaderboard();
+}
+function exportLeaderboard(){
+  const data = JSON.parse(localStorage.getItem('quiz_lb')||'[]');
+  if(!data.length) return alert("Tidak ada data untuk diexport");
+  let csv = "Nama,Score,Date\n";
+  data.forEach(d=> csv += `${d.name},${d.score},${d.date}\n`);
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'leaderboard.csv'; a.click();
+}
+
+// ---------- QUIZ FLOW ----------
+function renderQuestion(){
+  const q = QUESTIONS[state.idx % QUESTIONS.length];
+  questionTitle.textContent = q.q;
+  answersWrap.innerHTML = '';
+  q.choices.forEach((ch,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = ch;
+    btn.dataset.i = i;
+    btn.addEventListener('click', ()=>selectAnswer(i, btn));
+    answersWrap.appendChild(btn);
+  });
+  explain.textContent = 'Penjelasan akan muncul di sini.';
+  qIdx.textContent = state.idx + 1;
+  const pct = Math.round((state.idx / state.total) * 100);
+  progFill.style.width = pct + '%';
+  state.answered = false;
+  startTimer();
+}
+
+function selectAnswer(i, btn){
+  if(state.answered) return;
+  state.answered = true;
+  stopTimer();
+  const q = QUESTIONS[state.idx % QUESTIONS.length];
+  const buttons = answersWrap.querySelectorAll('button');
+  buttons.forEach(b=>{
+    const ii = parseInt(b.dataset.i);
+    if(ii === q.answer) b.classList.add('correct');
+    if(ii === i && ii !== q.answer) b.classList.add('wrong');
+    b.disabled = true;
+  });
+  if(i === q.answer){
+    state.score += 10;
+    explain.textContent = 'Benar! ' + (q.explain||'');
+    sfx(1000,120,0.06);
+  } else {
+    explain.textContent = 'Salah. ' + (q.explain||'');
+    sfx(220,180,0.06);
+  }
+}
+
+function startTimer(){
+  stopTimer();
+  state.remaining = parseInt(timerSelect.value || 45);
+  timerBadge.textContent = state.remaining;
+  state.timerId = setInterval(()=>{
+    state.remaining--;
+    timerBadge.textContent = state.remaining + 's';
+    if(state.remaining <= 0){
+      stopTimer();
+      // mark as timed out
+      explain.textContent = 'Waktu habis. ' + (QUESTIONS[state.idx].explain || '');
+      sfx(220,180,0.06);
+      const buttons = answersWrap.querySelectorAll('button');
+      buttons.forEach(b=> b.disabled = true);
+      state.answered = true;
+    }
+  },1000);
+}
+
+function stopTimer(){
+  if(state.timerId) clearInterval(state.timerId);
+  state.timerId = null;
+}
+
+function goNext(){
+  if(!state.answered){
+    alert("Jawab dulu atau lewati (tekan Next untuk melanjutkan setelah jawab).");
+    return;
+  }
+  state.idx++;
+  if(state.idx >= state.total){
+    finishQuiz();
+    return;
+  }
+  renderQuestion();
+}
+
+function finishQuiz(){
+  stopTimer();
+  progFill.style.width = '100%';
+  explain.textContent = `Sesi selesai — Skor: ${state.score}`;
+  setTimeout(()=> {
+    if(confirm(`Sesi selesai. Skor: ${state.score}. Simpan ke leaderboard?`)) saveScore();
+  },200);
+}
+
+// ---------- EVENTS ----------
+nextBtn.addEventListener('click', goNext);
+resetQBtn.addEventListener('click', ()=>{
+  if(confirm("Reset sesi sekarang?")) { state.idx = 0; state.score = 0; renderQuestion(); }
+});
+resetLb.addEventListener('click', clearLeaderboard);
+exportLb.addEventListener('click', exportLeaderboard);
+document.getElementById('saveScoreBtn')?.addEventListener('click', saveScore);
+
+// music toggle & URL
+musicToggle.addEventListener('change', ()=>{
+  if(musicToggle.checked) bgMusic.play().catch(()=>{}); else bgMusic.pause();
+});
+musicUrl.addEventListener('change', ()=>{
+  const url = musicUrl.value.trim();
+  if(url){ bgMusic.src = url; bgMusic.play().catch(()=>{}); }
+});
+timerSelect.addEventListener('change', ()=> {
+  // update badge; next question will use the new timer
+  state.remaining = parseInt(timerSelect.value);
+  timerBadge.textContent = state.remaining + 's';
+});
+countSelect.addEventListener('change', ()=>{
+  state.total = parseInt(countSelect.value);
+  qTot.textContent = state.total;
+  state.idx = 0; state.score = 0;
+  renderQuestion();
+});
+
+// dark mode toggle (CSS already dark default, but allow off)
+document.getElementById('darkMode').addEventListener('change', (e)=>{
+  if(e.target.checked){
+    document.body.style.background = 'radial-gradient(circle at 10% 10%, #041226 0%, #071428 40%, #0b1220 100%)';
+  } else {
+    document.body.style.background = '#f4f7fb';
+    document.body.style.color = '#10203a';
+  }
+});
+
+// reset entire app (clear storage)
+resetBtn.addEventListener('click', ()=>{
+  if(confirm("Reset skor & reload halaman?")){ localStorage.removeItem('quiz_lb'); location.reload(); }
+});
+
+// load leaderboard initially
+loadLeaderboard();
+
+// start quiz
+renderQuestion();
     answer: 3,
     explain: "Tari Remo populer di Jawa Timur."
   },
